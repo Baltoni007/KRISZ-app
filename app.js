@@ -166,7 +166,7 @@
     if (Notification.permission === "denied") return '<p class="note" style="margin:0">Az értesítések le vannak tiltva. A telefon beállításaiban, ennél az appnál kapcsolhatod vissza.</p>';
     var on = load("krisz-push") === true && Notification.permission === "granted";
     return "<h3>" + (on ? "Értesítések bekapcsolva" : "Szólunk, ha új alkalom van") + '</h3><p class="note">' +
-      (on ? "Ezen az eszközön kapsz értesítést az új alkalmakról és fontos hírekről." : "Évente néhány értesítés: új alkalmak, változások, fontos hírek.") + "</p>" +
+      (on ? "Ezen az eszközön kapsz értesítést az új alkalmakról és fontos hírekről." : "Csak akkor írunk, ha új alkalom van, változik valami, vagy fontos hír érkezik.") + "</p>" +
       (on ? "" : '<button class="btn primary" id="pushBtn">Értesítések bekapcsolása</button>') +
       '<div class="status" id="pushStatus" role="status">' + esc(state.pushMsg) + "</div>";
   }
@@ -179,14 +179,9 @@
     return out;
   }
 
-  function enablePush() {
-    var st = $("pushStatus"), btn = $("pushBtn");
-    if (btn) btn.disabled = true;
-    if (st) st.textContent = "Engedély kérése…";
-    Notification.requestPermission().then(function (perm) {
-      if (perm !== "granted") throw new Error("Nem engedélyezted az értesítéseket.");
-      return navigator.serviceWorker.ready;
-    }).then(function (reg) {
+  // Feliratkozás és mentés az adatbázisba. Engedélyt nem kér, csak ha már megvan.
+  function subscribeAndSave() {
+    return navigator.serviceWorker.ready.then(function (reg) {
       return reg.pushManager.getSubscription().then(function (s) {
         return s || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64(CFG.vapidPublicKey) });
       });
@@ -194,12 +189,54 @@
       var j = sub.toJSON();
       return sb.from("push_subscriptions").insert({ endpoint: j.endpoint, subscription: j }).then(function (r) {
         if (r.error && r.error.code !== "23505") throw new Error("A feliratkozást nem sikerült elmenteni. Próbáld újra később.");
+        store("krisz-push", true);
       });
-    }).then(function () {
-      store("krisz-push", true); state.pushMsg = ""; renderKapcsolat();
-    }).catch(function (e) {
-      state.pushMsg = e.message || "Nem sikerült bekapcsolni."; renderKapcsolat();
     });
+  }
+
+  function enablePush() {
+    var st = $("pushStatus"), btn = $("pushBtn");
+    if (btn) btn.disabled = true;
+    if (st) st.textContent = "Engedély kérése…";
+    return Notification.requestPermission().then(function (perm) {
+      if (perm !== "granted") throw new Error("Nem engedélyezted az értesítéseket.");
+      return subscribeAndSave();
+    }).then(function () {
+      state.pushMsg = ""; renderKapcsolat(); return true;
+    }).catch(function (e) {
+      state.pushMsg = e.message || "Nem sikerült bekapcsolni."; renderKapcsolat(); return false;
+    });
+  }
+
+  // Első indításkor (telepített appban) egyetlen gombnyomással bekapcsolható üdvözlő képernyő.
+  function maybeWelcome() {
+    if (!sb || !CFG.vapidPublicKey || !pushSupported()) return;
+    if (Notification.permission === "granted") { subscribeAndSave().catch(function () {}); return; }
+    if (Notification.permission !== "default") return;
+    if (!standalone && isIOS) return;
+    var later = load("krisz-welcome-later");
+    if (later && Date.now() - later < 3 * 864e5) return;
+    var el = document.createElement("div");
+    el.className = "welcome"; el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.setAttribute("aria-labelledby", "wTitle");
+    el.innerHTML = '<div class="welcome-card"><span class="logo welcome-logo" aria-hidden="true"></span>' +
+      '<h2 id="wTitle">Szia! Üdv a KRISZ appban.</h2>' +
+      '<p>Kapcsold be az értesítéseket, és szólunk, ha új alkalom van, vagy változik valami. Ritkán írunk, csak ha fontos.</p>' +
+      '<button class="btn primary welcome-go" id="wGo">Értesítések bekapcsolása</button>' +
+      '<p class="welcome-hint">A következő ablakban válaszd az <b>Engedélyezés</b> gombot.</p>' +
+      '<button class="linkbtn" id="wLater">Most nem</button><div class="status" id="wStatus" role="status"></div></div>';
+    document.body.appendChild(el);
+    $("wGo").focus();
+    $("wGo").addEventListener("click", function () {
+      $("wGo").disabled = true; $("wStatus").textContent = "Egy pillanat…";
+      Notification.requestPermission().then(function (perm) {
+        if (perm !== "granted") { el.remove(); store("krisz-welcome-later", Date.now()); renderKapcsolat(); return; }
+        return subscribeAndSave().then(function () {
+          $("wStatus").textContent = "Kész! Mostantól szólunk az újdonságokról.";
+          renderKapcsolat(); setTimeout(function () { el.remove(); }, 1400);
+        });
+      }).catch(function () { $("wGo").disabled = false; $("wStatus").textContent = "Nem sikerült. Próbáld újra, vagy később a Felületeink fülön."; });
+    });
+    $("wLater").addEventListener("click", function () { store("krisz-welcome-later", Date.now()); el.remove(); });
   }
 
   /* ---------- editor ---------- */
@@ -367,6 +404,6 @@
     sb.auth.onAuthStateChange(function (evt, session) { if (evt === "SIGNED_IN" || evt === "SIGNED_OUT") setSession(session); });
   }
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js").catch(function () {});
+    navigator.serviceWorker.register("sw.js").then(function () { setTimeout(maybeWelcome, 600); }).catch(function () {});
   }
 })();

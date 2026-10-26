@@ -1,7 +1,8 @@
 // KRISZ App service worker: offline működés és értesítések
-const VERSION = "krisz-v4";
+importScripts("config.js?v=5");
+const VERSION = "krisz-v5";
 const SHELL = [
-  "./", "index.html", "styles.css?v=4", "app.js?v=4", "config.js?v=4", "data.json", "manifest.webmanifest",
+  "./", "index.html", "styles.css?v=5", "app.js?v=5", "config.js?v=5", "data.json", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/favicon-32.png", "icons/logo-mask.png",
   "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"
 ];
@@ -43,7 +44,7 @@ self.addEventListener("push", (e) => {
   e.waitUntil(self.registration.showNotification(data.title, {
     body: data.body,
     icon: "icons/icon-192.png",
-    badge: "icons/favicon-32.png", "icons/logo-mask.png",
+    badge: "icons/favicon-32.png",
     data: { url: data.url }
   }));
 });
@@ -55,6 +56,23 @@ self.addEventListener("notificationclick", (e) => {
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
       for (const c of list) { if (c.url.startsWith(self.registration.scope)) { c.navigate(target); return c.focus(); } }
       return self.clients.openWindow(target);
+    })
+  );
+});
+
+// Ha a böngésző lecseréli a feliratkozást, az új címet csendben elmentjük, hogy az értesítések ne álljanak le.
+self.addEventListener("pushsubscriptionchange", (e) => {
+  const cfg = self.KRISZ_CONFIG || {};
+  if (!cfg.supabaseUrl || !cfg.vapidPublicKey) return;
+  const key = Uint8Array.from(atob(cfg.vapidPublicKey.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - cfg.vapidPublicKey.length % 4) % 4)), (c) => c.charCodeAt(0));
+  e.waitUntil(
+    self.registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key }).then((sub) => {
+      const j = sub.toJSON();
+      return fetch(cfg.supabaseUrl + "/rest/v1/push_subscriptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: cfg.supabaseKey, Authorization: "Bearer " + cfg.supabaseKey, Prefer: "resolution=ignore-duplicates" },
+        body: JSON.stringify({ endpoint: j.endpoint, subscription: j })
+      });
     })
   );
 });
