@@ -1,9 +1,9 @@
-// Automatikus értesítés: összevonja a várakozó változásokat (új/módosított alkalmak, hírek),
+// Automatikus értesítés: összevonja a várakozó változásokat (új/módosított/elmaradó alkalmak, hírek),
 // és egy értesítést küld minden feliratkozónak. Az adatbázis időzítője hívja 5 percenként.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import webpush from "npm:web-push@3.6.7";
 
-type Row = { id: number; kind: "new" | "changed" | "news"; ref_id: string | null; title: string; detail: string };
+type Row = { id: number; kind: "new" | "changed" | "news" | "cancelled"; ref_id: string | null; title: string; detail: string };
 
 function compose(rows: Row[]) {
   // Ugyanarra az alkalomra csak egy sor maradjon; az "új" erősebb a "változott"-nál.
@@ -12,17 +12,20 @@ function compose(rows: Row[]) {
     const key = (r.kind === "news" ? "news:" : "ev:") + (r.ref_id ?? r.id);
     const prev = byRef.get(key);
     // A legfrissebb címet és adatot tartjuk meg, de ha az alkalom ebben a körben új volt, az is marad.
-    byRef.set(key, prev && prev.kind === "new" ? { ...r, kind: "new" } : r);
+    byRef.set(key, prev && prev.kind === "new" && r.kind !== "cancelled" ? { ...r, kind: "new" } : r);
   }
   const items = [...byRef.values()];
   if (items.length === 1) {
     const r = items[0];
-    const title = r.kind === "new" ? "Új alkalom: " + r.title : r.kind === "changed" ? "Változás: " + r.title : "Új hír: " + r.title;
-    return { title: title.slice(0, 80), body: r.detail || "Nézd meg a KRISZ appban!" };
+    const prefix = { new: "Új alkalom: ", changed: "Változás: ", news: "Új hír: ", cancelled: "Elmarad: " }[r.kind];
+    const body = r.kind === "cancelled"
+      ? "Az alkalom elmarad" + (r.detail && r.detail !== "Az alkalom elmarad." ? " (" + r.detail + ")." : ".")
+      : r.detail || "Nézd meg a KRISZ appban!";
+    return { title: (prefix + r.title).slice(0, 80), body };
   }
   const allChanged = items.every((r) => r.kind === "changed");
   const title = allChanged ? `${items.length} alkalom frissült` : `${items.length} újdonság a KRISZ appban`;
-  const body = items.slice(0, 4).map((r) => r.title).join(" · ") + (items.length > 4 ? " …" : "");
+  const body = items.slice(0, 4).map((r) => (r.kind === "cancelled" ? "Elmarad: " : "") + r.title).join(" · ") + (items.length > 4 ? " …" : "");
   return { title, body: body.slice(0, 200) };
 }
 
@@ -51,15 +54,17 @@ Deno.serve(async (req) => {
 
   let sent = 0;
   const gone: string[] = [];
+  const errors: string[] = [];
   await Promise.all((subs ?? []).map(async (s) => {
     try { await webpush.sendNotification(s.subscription, payload, { TTL: 60 * 60 * 24 }); sent++; }
     catch (e) {
       const code = (e as { statusCode?: number }).statusCode;
       if (code === 404 || code === 410) gone.push(s.endpoint);
+      else errors.push(String(code ?? (e as Error).message));
     }
   }));
   if (gone.length) await admin.from("push_subscriptions").delete().in("endpoint", gone);
 
-  return new Response(JSON.stringify({ items: rows.length, title: msg.title, sent, removed: gone.length }),
+  return new Response(JSON.stringify({ items: rows.length, title: msg.title, body: msg.body, sent, removed: gone.length, errors }),
     { headers: { "Content-Type": "application/json" } });
 });

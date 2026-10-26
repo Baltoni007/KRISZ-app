@@ -1,0 +1,2 @@
+-- Elmaradó alkalmak: törléskor vagy nyilvánosból rejtettre állításkor "Elmarad" értesítés.
+-- Lásd az élő adatbázisban alkalmazott "notify_cancelled_events" migrációt (queue_event_removed trigger).
