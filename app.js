@@ -253,7 +253,7 @@
     });
     h += '<div class="status" id="saveStatus" role="status"></div>';
 
-    h += '<h2 class="sec">Értesítés küldése</h2><form class="panel" id="pushForm"><div class="field"><label for="pTitle">Cím</label><input id="pTitle" maxlength="80" required placeholder="Pl. Új alkalom: Imaéjjel"></div>' +
+    h += '<h2 class="sec">Egyedi értesítés</h2><p class="note">Az új és módosított alkalmakról az app magától szól. Ezzel egyéb fontos hírt küldhetsz.</p><form class="panel" id="pushForm"><div class="field"><label for="pTitle">Cím</label><input id="pTitle" maxlength="80" required placeholder="Pl. Új alkalom: Imaéjjel"></div>' +
       '<div class="field"><label for="pBody">Szöveg</label><textarea id="pBody" maxlength="200" placeholder="Pl. Október 31-én, szombaton. Gyere te is!"></textarea></div>' +
       '<button class="btn primary" type="submit">Küldés minden feliratkozónak</button><div class="status" id="pStatus" role="status"></div></form>';
 
@@ -273,11 +273,8 @@
       if (r.error) throw r.error;
       return Promise.all([fetchData(), loadEditorData()]);
     }).then(function () {
-      var st2 = $("saveStatus"); if (st2) st2.textContent = ok ? "Jóváhagyva, mindenkinél frissül." : "Rendben, lezártuk.";
-      if (ok && s && s.kind === "new" && s.new_event && $("pTitle")) {
-        $("pTitle").value = "Új alkalom: " + s.new_event.title;
-        $("pBody").value = dateLabel(s.new_event) + (s.new_event.place ? ", " + s.new_event.place : "");
-      }
+      var st2 = $("saveStatus");
+      if (st2) st2.textContent = ok && s && s.kind !== "gap" ? "Jóváhagyva. Mindenkinél frissül, és pár percen belül értesítést kapnak róla." : "Rendben, lezártuk.";
     }).catch(function (e) {
       btn.disabled = false; var st3 = $("saveStatus"); if (st3) st3.textContent = "Nem sikerült menteni: " + (e.message || "ismeretlen hiba");
     });

@@ -1,0 +1,3 @@
+-- Lásd az élő adatbázisban alkalmazott "auto_notifications" migrációt:
+-- notify_queue tábla, triggerek az events/news táblán, flush_notifications() és pg_cron 5 percenként,
+-- ami a notify-changes edge functiont hívja (x-cron-secret fejléccel, app_secrets.CRON_SECRET).
