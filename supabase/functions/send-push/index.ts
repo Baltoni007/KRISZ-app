@@ -19,10 +19,6 @@ Deno.serve(async (req) => {
   const url = Deno.env.get("SUPABASE_URL")!;
   const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
   const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const vapidPublic = Deno.env.get("VAPID_PUBLIC_KEY");
-  const vapidPrivate = Deno.env.get("VAPID_PRIVATE_KEY");
-  if (!vapidPublic || !vapidPrivate) return json({ error: "Hiányzó VAPID kulcs" }, 500);
-
   const asUser = createClient(url, anon, {
     global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
   });
@@ -39,8 +35,12 @@ Deno.serve(async (req) => {
   const body = (payload.body ?? "").toString().slice(0, 200).trim();
   if (!title) return json({ error: "Hiányzik a cím" }, 400);
 
-  webpush.setVapidDetails("mailto:kriszpont@gmail.com", vapidPublic, vapidPrivate);
   const admin = createClient(url, service);
+  // A VAPID kulcsok az app_secrets táblában vannak, amit csak a szerveroldal olvashat.
+  const { data: keys } = await admin.from("app_secrets").select("name, value").in("name", ["VAPID_PUBLIC_KEY", "VAPID_PRIVATE_KEY"]);
+  const k = Object.fromEntries((keys ?? []).map((r) => [r.name, r.value]));
+  if (!k.VAPID_PUBLIC_KEY || !k.VAPID_PRIVATE_KEY) return json({ error: "Hiányzó VAPID kulcs" }, 500);
+  webpush.setVapidDetails("mailto:kriszpont@gmail.com", k.VAPID_PUBLIC_KEY, k.VAPID_PRIVATE_KEY);
   const { data: subs, error } = await admin.from("push_subscriptions").select("endpoint, subscription");
   if (error) return json({ error: error.message }, 500);
 

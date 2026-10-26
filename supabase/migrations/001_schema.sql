@@ -141,3 +141,11 @@ $$;
 
 revoke all on function public.decide_suggestion(uuid, boolean) from public, anon;
 grant execute on function public.decide_suggestion(uuid, boolean) to authenticated;
+
+-- Szerveroldali titkok (VAPID kulcsok). Nincs policy: csak a service role olvashatja.
+create table public.app_secrets (
+  name text primary key,
+  value text not null
+);
+alter table public.app_secrets enable row level security;
+revoke all on public.app_secrets from anon, authenticated;

@@ -1,5 +1,5 @@
 // KRISZ App service worker: offline működés és értesítések
-const VERSION = "krisz-v1";
+const VERSION = "krisz-v2";
 const SHELL = [
   "./", "index.html", "styles.css", "app.js", "config.js", "data.json", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/favicon-32.png",
