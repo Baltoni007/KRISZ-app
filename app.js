@@ -143,7 +143,8 @@
       tile("TikTok", "@kriszifi", "https://www.tiktok.com/@kriszifi") +
       tile("YouTube", "@kriszifjusag", "https://www.youtube.com/@kriszifjusag") +
       tile("Threads", "@kriszifjusag", "https://www.threads.net/@kriszifjusag") +
-      tile("Weboldal", "krisz.org", "https://krisz.org") + "</div>";
+      tile("Weboldal", "krisz.org", "https://krisz.org") +
+      tile("Énekeskönyv", "Külön is telepíthető", "https://krisz-enekeskonyv.netlify.app/") + "</div>";
     h += '<h2 class="sec">Értesítések</h2><div class="panel" id="pushPanel">' + pushPanel() + "</div>";
     if (!standalone) {
       h += '<div class="install"><b>Tedd ki a kezdőképernyőre</b>' +
@@ -330,16 +331,38 @@
   }
 
   /* ---------- navigation & events ---------- */
-  var VIEWS = ["alkalmak", "hirek", "kapcsolat", "szerk"];
+  var VIEWS = ["alkalmak", "hirek", "enekek", "kapcsolat", "szerk"];
   function show(v) {
     if (VIEWS.indexOf(v) < 0) v = "alkalmak";
     document.querySelectorAll("nav.tabs button").forEach(function (b) { if (b.dataset.v === v) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
     VIEWS.forEach(function (x) { $("v-" + x).hidden = x !== v; });
     if (v === "szerk" && !state.editor) renderLogin();
+    document.body.classList.toggle("songs-open", v === "enekek");
+    if (v === "enekek") openSongbook();
     if (location.hash !== "#" + v && location.hash.indexOf("access_token") < 0) history.replaceState(null, "", "#" + v);
     window.scrollTo(0, 0);
   }
   document.querySelectorAll("nav.tabs button").forEach(function (b) { b.addEventListener("click", function () { show(b.dataset.v); }); });
+
+  // Énekeskönyv: első megnyitáskor töltjük be, utána a fülváltások között megmarad.
+  var SONGBOOK = "https://krisz-enekeskonyv.netlify.app/";
+  function sizeSongbook() {
+    var top = document.querySelector("header.top").getBoundingClientRect().height;
+    var bottom = document.querySelector("nav.tabs").getBoundingClientRect().height;
+    var bar = document.querySelector(".songbar").getBoundingClientRect().height;
+    document.documentElement.style.setProperty("--chrome-h", (top + bottom + bar) + "px");
+  }
+  function openSongbook() {
+    sizeSongbook();
+    var box = $("songframe");
+    if (box.firstChild) return;
+    if (!navigator.onLine) { box.innerHTML = '<p class="empty">Az énekeskönyv első megnyitásához internet kell. Utána internet nélkül is működik.</p>'; return; }
+    var f = document.createElement("iframe");
+    f.src = SONGBOOK; f.title = "KRISZ Énekeskönyv"; f.setAttribute("allow", "fullscreen; screen-wake-lock");
+    box.appendChild(f);
+  }
+  window.addEventListener("resize", function () { if (document.body.classList.contains("songs-open")) sizeSongbook(); });
+  window.addEventListener("online", function () { var box = $("songframe"); if (box && !box.querySelector("iframe")) box.innerHTML = ""; });
 
   function copyText(t, statusId, msg) {
     var st = $(statusId);
