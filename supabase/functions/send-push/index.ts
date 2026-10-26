@@ -44,7 +44,8 @@ Deno.serve(async (req) => {
   const { data: subs, error } = await admin.from("push_subscriptions").select("endpoint, subscription");
   if (error) return json({ error: error.message }, 500);
 
-  const message = JSON.stringify({ title, body, url: payload.url ?? "./" });
+  await admin.from("notifications").insert({ title, body, url: "./#alkalmak" });
+  const message = JSON.stringify({ title, body, url: "./#ertesitesek" });
   let sent = 0;
   const gone: string[] = [];
   await Promise.all((subs ?? []).map(async (s) => {

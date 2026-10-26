@@ -48,9 +48,11 @@ Deno.serve(async (req) => {
   if (!rows || !rows.length) return new Response(JSON.stringify({ sent: 0, items: 0 }));
 
   const msg = compose(rows as Row[]);
+  // Előzmény az app Értesítések nézetéhez
+  await admin.from("notifications").insert({ title: msg.title, body: msg.body, url: "./#alkalmak" });
   webpush.setVapidDetails("mailto:kriszpont@gmail.com", k.VAPID_PUBLIC_KEY, k.VAPID_PRIVATE_KEY);
   const { data: subs } = await admin.from("push_subscriptions").select("endpoint, subscription");
-  const payload = JSON.stringify({ ...msg, url: "./#alkalmak" });
+  const payload = JSON.stringify({ ...msg, url: "./#ertesitesek" });
 
   let sent = 0;
   const gone: string[] = [];

@@ -43,11 +43,12 @@
   function fetchData() {
     var remote = sb ? Promise.all([
       sb.from("events").select("*").order("start_date", { ascending: true, nullsFirst: false }),
-      sb.from("news").select("*").order("published_on", { ascending: false }).limit(20)
+      sb.from("news").select("*").order("published_on", { ascending: false }).limit(20),
+      sb.from("notifications").select("id, title, body, url, created_at").order("created_at", { ascending: false }).limit(20)
     ]).then(function (r) {
       if (r[0].error || r[1].error) throw (r[0].error || r[1].error);
       var upd = r[0].data.reduce(function (m, e) { return e.updated_at > m ? e.updated_at : m; }, "");
-      return { events: r[0].data, news: r[1].data, updated: upd || new Date().toISOString() };
+      return { events: r[0].data, news: r[1].data, notifications: r[2].error ? [] : r[2].data, updated: upd || new Date().toISOString() };
     }) : Promise.reject(new Error("no-backend"));
 
     return remote.then(function (d) {
@@ -58,7 +59,8 @@
       return fetch("data.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).catch(function () { return cached || { events: [], news: [], updated: null }; });
     }).then(function (d) {
       state.events = d.events || []; state.news = d.news || []; state.updated = d.updated;
-      renderAlkalmak(); renderHirek();
+      state.notifications = d.notifications || [];
+      renderAlkalmak(); renderHirek(); renderErtesitesek();
       $("offline").hidden = !state.offline;
     });
   }
@@ -109,6 +111,46 @@
     if (state.updated) h += '<div class="fresh">Frissítve: ' + esc(fmtStamp(state.updated)) + "</div>";
     h += '<div class="status" id="shareStatus" role="status"></div>';
     $("v-alkalmak").innerHTML = h;
+  }
+
+  /* ---------- értesítések előzménye ---------- */
+  function lastSeen() { return load("krisz-notif-seen") || ""; }
+  function updateBell() {
+    var seen = lastSeen();
+    var n = (state.notifications || []).filter(function (x) { return x.created_at > seen; }).length;
+    var b = $("bellBadge"); b.hidden = !n; b.textContent = n > 9 ? "9+" : n;
+    $("bellBtn").setAttribute("aria-label", n ? "Értesítések, " + n + " új" : "Értesítések");
+  }
+  function relTime(iso) {
+    var d = new Date(iso), now = new Date();
+    var mins = Math.round((now - d) / 60000);
+    if (mins < 1) return "most";
+    if (mins < 60) return mins + " perce";
+    var hrs = Math.round(mins / 60);
+    if (hrs < 24 && d.getDate() === now.getDate()) return "ma " + fmtStamp(iso).slice(11);
+    var y = new Date(now); y.setDate(now.getDate() - 1);
+    if (d.toDateString() === y.toDateString()) return "tegnap " + fmtStamp(iso).slice(11);
+    return fmtStamp(iso);
+  }
+  function renderErtesitesek() {
+    var seen = state.seenBefore != null ? state.seenBefore : lastSeen();
+    var list = state.notifications || [];
+    var h = '<h2 class="sec" style="margin-top:4px">Értesítések</h2>';
+    if (!list.length) h += '<p class="empty">Még nem küldtünk értesítést. Ha új alkalom lesz, vagy változik valami, itt is megtalálod.</p>';
+    else h += '<p class="note">Az utolsó ' + list.length + ' értesítés.</p>';
+    list.forEach(function (x) {
+      var isNew = x.created_at > seen;
+      h += '<article class="notif' + (isNew ? " is-new" : "") + '"><div class="notif-top"><h3>' + esc(x.title) + '</h3><time datetime="' + esc(x.created_at) + '">' + esc(relTime(x.created_at)) + '</time></div>' +
+        (x.body ? "<p>" + esc(x.body) + "</p>" : "") + '<button class="linkbtn" data-goto="alkalmak">Alkalmak megnyitása →</button></article>';
+    });
+    $("v-ertesitesek").innerHTML = h;
+    updateBell();
+  }
+  function markSeen() {
+    var list = state.notifications || [];
+    state.seenBefore = lastSeen();
+    if (list.length) store("krisz-notif-seen", list[0].created_at);
+    renderErtesitesek();
   }
 
   function tile(t, s, u) { return '<a class="tile" href="' + esc(u) + '" target="_blank" rel="noopener"><b>' + esc(t) + "</b><span>" + esc(s) + "</span></a>"; }
@@ -331,13 +373,15 @@
   }
 
   /* ---------- navigation & events ---------- */
-  var VIEWS = ["alkalmak", "hirek", "enekek", "kapcsolat", "szerk"];
+  var VIEWS = ["alkalmak", "hirek", "ertesitesek", "enekek", "kapcsolat", "szerk"];
   function show(v) {
     if (VIEWS.indexOf(v) < 0) v = "alkalmak";
     document.querySelectorAll("nav.tabs button").forEach(function (b) { if (b.dataset.v === v) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
     VIEWS.forEach(function (x) { $("v-" + x).hidden = x !== v; });
     if (v === "szerk" && !state.editor) renderLogin();
     document.body.classList.toggle("songs-open", v === "enekek");
+    if (v === "ertesitesek") markSeen(); else state.seenBefore = null;
+    $("bellBtn").classList.toggle("on", v === "ertesitesek");
     if (v === "enekek") openSongbook();
     if (location.hash !== "#" + v && location.hash.indexOf("access_token") < 0) history.replaceState(null, "", "#" + v);
     window.scrollTo(0, 0);
@@ -383,6 +427,7 @@
     }
     if (t.dataset.copy) { copyText(t.dataset.copy, "copyStatus", "Kimásolva: " + t.dataset.copy); return; }
     if (t.id === "pushBtn") { enablePush(); return; }
+    if (t.id === "bellBtn") { show("ertesitesek"); return; }
     if (t.id === "installBtn" && deferredInstall) { deferredInstall.prompt(); deferredInstall.userChoice.finally(function () { deferredInstall = null; renderKapcsolat(); }); return; }
     if (t.id === "editorLogin") { show("szerk"); return; }
     if (t.id === "logoutBtn") { sb.auth.signOut().then(function () { show("alkalmak"); }); return; }
@@ -410,6 +455,12 @@
         if (r.data.sent) { $("pTitle").value = ""; $("pBody").value = ""; }
       });
     }
+  });
+
+  // Ha az app már nyitva van, és az értesítésre koppintanak, a megfelelő nézetre ugrunk, és frissítünk
+  window.addEventListener("hashchange", function () {
+    var h = location.hash.replace("#", "");
+    if (VIEWS.indexOf(h) > -1 && h !== "szerk") { fetchData().then(function () { show(h); }); }
   });
 
   window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferredInstall = e; renderKapcsolat(); });

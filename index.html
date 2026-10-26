@@ -15,12 +15,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Domine:wght@500;600;700&family=Open+Sans:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="styles.css?v=7">
+<link rel="stylesheet" href="styles.css?v=8">
 </head>
 <body>
 <header class="top"><div class="wrap">
   <span class="logo" role="img" aria-label="KRISZ logó"></span>
   <div class="top-title"><b>KRISZ</b><span>Kárpátaljai Református Ifjúsági Szervezet</span></div>
+  <button class="bell" id="bellBtn" aria-label="Értesítések"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="bell-badge" id="bellBadge" hidden></span></button>
   <a class="join" id="joinBtn" href="https://docs.google.com/forms/d/e/1FAIpQLSclA2RhXwaBG1devkXjagt2tkEIuiBjUSBODRzghQhLW29TBg/viewform" target="_blank" rel="noopener">Tag leszek!</a>
 </div></header>
 
@@ -28,6 +29,7 @@
   <div class="offline" id="offline" hidden>Nincs internet. A legutóbb betöltött adatokat látod.</div>
   <section class="view" id="v-alkalmak" aria-label="Alkalmak"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></section>
   <section class="view" id="v-hirek" aria-label="Hírek" hidden></section>
+  <section class="view" id="v-ertesitesek" aria-label="Értesítések" hidden></section>
   <section class="view" id="v-enekek" aria-label="Énekek" hidden>
     <div class="songbar"><span><b>KRISZ Énekeskönyv</b></span><a href="https://krisz-enekeskonyv.netlify.app/" target="_blank" rel="noopener">Külön megnyitás ↗</a></div>
     <div class="songframe" id="songframe"></div>
@@ -45,8 +47,8 @@
   <button data-v="szerk" id="tabSzerk" hidden><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>Szerkesztő<span class="badge" id="badge" hidden></span></button>
 </div></nav>
 
-<script src="config.js?v=7"></script>
+<script src="config.js?v=8"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 </body>
 </html>
