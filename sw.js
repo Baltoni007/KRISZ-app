@@ -1,7 +1,7 @@
 // KRISZ App service worker: offline működés és értesítések
 const VERSION = "krisz-v3";
 const SHELL = [
-  "./", "index.html", "styles.css", "app.js", "config.js", "data.json", "manifest.webmanifest",
+  "./", "index.html", "styles.css?v=3", "app.js?v=3", "config.js?v=3", "data.json", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/favicon-32.png", "icons/logo-mask.png",
   "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"
 ];
