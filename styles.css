@@ -175,5 +175,7 @@ html{scroll-padding-top:70px}
 .songbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted);padding-block:8px}
 .songbar b{color:var(--fg);font-family:var(--display);font-weight:600}
 .songbar a{color:var(--accent);font-weight:600;text-decoration:none;white-space:nowrap}
-.songframe iframe{display:block;width:100%;height:calc(100vh - var(--chrome-h, 180px) - 8px);height:calc(100dvh - var(--chrome-h, 180px) - 8px);border:1px solid var(--line);border-radius:var(--r);background:#fff}
+.songframe iframe{display:block;width:100%;height:calc(100vh - var(--chrome-h, 180px));height:calc(100dvh - var(--chrome-h, 180px));border:0;border-top:1px solid var(--line);background:#fff}
 body.songs-open main{padding-block:0}
+.songframe{margin-left:calc(-1 * max(16px, env(safe-area-inset-left,0px)));margin-right:calc(-1 * max(16px, env(safe-area-inset-right,0px)))}
+@media (min-width:652px){.songframe{margin-left:0;margin-right:0}.songframe iframe{border:1px solid var(--line);border-radius:var(--r)}}
