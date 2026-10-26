@@ -61,6 +61,7 @@
       state.events = d.events || []; state.news = d.news || []; state.updated = d.updated;
       state.notifications = d.notifications || [];
       renderAlkalmak(); renderHirek(); renderErtesitesek();
+      if (!$("v-ertesitesek").hidden) markSeen();
       $("offline").hidden = !state.offline;
     });
   }
@@ -148,7 +149,7 @@
   }
   function markSeen() {
     var list = state.notifications || [];
-    state.seenBefore = lastSeen();
+    if (state.seenBefore == null) state.seenBefore = lastSeen();
     if (list.length) store("krisz-notif-seen", list[0].created_at);
     renderErtesitesek();
   }
