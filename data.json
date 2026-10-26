@@ -1,0 +1,177 @@
+{
+ "updated": "2026-10-26T19:00:00Z",
+ "events": [
+  {
+   "id": "2026-lendulet",
+   "title": "Lendület ifjúsági találkozó",
+   "start_date": "2026-06-27",
+   "end_date": null,
+   "orgs": [
+    "KRISZ"
+   ],
+   "place": "Jánosi stadion",
+   "description": "A XVI. Lendület ifjúsági találkozó egész napos programmal: igei üzenet, dicsőítés, interaktív programok és ebéd.",
+   "tags": [
+    "Egésznapos",
+    "Dicsőítés",
+    "Evangelizáció"
+   ],
+   "url": "https://krisz.org/alkalmaink/2026-lendulet-ifjusagi-talalkozo"
+  },
+  {
+   "id": "2026-krisz-het",
+   "title": "KRISZ hét",
+   "start_date": "2026-07-27",
+   "end_date": "2026-08-01",
+   "orgs": [
+    "KRISZ"
+   ],
+   "place": "Beregszászi Református Líceum",
+   "description": "A nyár legfontosabb hete konfirmált, 15 év feletti fiataloknak: előadások, dicsőítés, sport és esti programok.",
+   "tags": [
+    "Ottalvós",
+    "Előadások",
+    "KRISZ7"
+   ],
+   "url": "https://krisz.org/alkalmaink/2026-krisz-het"
+  },
+  {
+   "id": "2026-imaejjel",
+   "title": "Imaéjjel",
+   "start_date": null,
+   "end_date": null,
+   "orgs": [
+    "KRISZ"
+   ],
+   "place": "",
+   "description": "Éjszakába nyúló közös dicsőítés és imádság interaktív imaállomásokkal és csendes, kreatív elcsendesedéssel.",
+   "tags": [
+    "Reformáció",
+    "Imádság",
+    "Dicsőítés"
+   ],
+   "url": "https://krisz.org/alkalmaink/2026-imaejjel"
+  },
+  {
+   "id": "2026-11-merce",
+   "title": "MÉRCE Ifitalálkozó",
+   "start_date": "2026-11-07",
+   "end_date": null,
+   "orgs": [
+    "Mérce KA"
+   ],
+   "place": "",
+   "description": "Pörgős dicsőítés, aktuális kérdésekről szóló igei üzenet, beszélgetés és társasjáték a környékbeli fiatalokkal.",
+   "tags": [
+    "Dicsőítés",
+    "Szeretetvendégség"
+   ],
+   "url": "https://krisz.org/alkalmaink/2026-11-merce-ifitalkozo"
+  },
+  {
+   "id": "2026-11-tiborka",
+   "title": "TiBorKa Ifitalálkozó",
+   "start_date": "2026-11-07",
+   "end_date": null,
+   "orgs": [
+    "TiBorKa"
+   ],
+   "place": "",
+   "description": "Pörgős dicsőítés, aktuális kérdésekről szóló igei üzenet, beszélgetés és társasjáték a környékbeli fiatalokkal.",
+   "tags": [
+    "Dicsőítés",
+    "Szeretetvendégség"
+   ],
+   "url": "https://krisz.org/alkalmaink/2026-11-tiborka-ifitalalkozo"
+  },
+  {
+   "id": "2026-11-beregi",
+   "title": "Beregi Ifitalálkozó",
+   "start_date": "2026-11-14",
+   "end_date": null,
+   "orgs": [
+    "Beregi KA"
+   ],
+   "place": "",
+   "description": "Pörgős dicsőítés, aktuális kérdésekről szóló igei üzenet, beszélgetés és társasjáték a környékbeli fiatalokkal.",
+   "tags": [
+    "Dicsőítés",
+    "Szeretetvendégség"
+   ],
+   "url": "https://krisz.org/alkalmaink/2026-11-beregi-ifitalalkozo"
+  },
+  {
+   "id": "2026-tohati-kt",
+   "title": "Tóháti Kt-s hétvége",
+   "start_date": "2026-11-20",
+   "end_date": "2026-11-22",
+   "orgs": [
+    "Tóháti KA"
+   ],
+   "place": "",
+   "description": "Hétvége konfirmációra készülő fiataloknak: csapatjátékok, beszélgetések a hit kérdéseiről, tantermi hangulat nélkül.",
+   "tags": [
+    "Hétvége",
+    "Ottalvós",
+    "Kt"
+   ],
+   "url": "https://krisz.org/alkalmaink/2026-tohati-kts-hetvege"
+  },
+  {
+   "id": "2026-11-tiszahat",
+   "title": "Tiszahát Ifitalálkozó",
+   "start_date": "2026-11-28",
+   "end_date": null,
+   "orgs": [
+    "Tiszahát KA"
+   ],
+   "place": "",
+   "description": "Pörgős dicsőítés, aktuális kérdésekről szóló igei üzenet, beszélgetés és társasjáték a környékbeli fiatalokkal.",
+   "tags": [
+    "Dicsőítés",
+    "Szeretetvendégség"
+   ],
+   "url": "https://krisz.org/alkalmaink/2026-11-tiszahat-ifitalalkozo"
+  },
+  {
+   "id": "2026-advent",
+   "title": "Adventi dicsőítő alkalom",
+   "start_date": "2026-12-19",
+   "end_date": null,
+   "orgs": [
+    "KRISZ"
+   ],
+   "place": "",
+   "description": "Akusztikus dicsőítés, elcsendesedés és személyes üzenet, hogy felkészüljünk Jézus érkezésére.",
+   "tags": [
+    "Dicsőítés",
+    "Szeretetvendégség"
+   ],
+   "url": "https://krisz.org/alkalmaink/2026-adventi-dicsoito-alkalom"
+  },
+  {
+   "id": "2026-12-tiszahat",
+   "title": "Tiszahát Ifitalálkozó",
+   "start_date": "2026-12-29",
+   "end_date": null,
+   "orgs": [
+    "Tiszahát KA"
+   ],
+   "place": "",
+   "description": "Pörgős dicsőítés, aktuális kérdésekről szóló igei üzenet, beszélgetés és társasjáték a környékbeli fiatalokkal.",
+   "tags": [
+    "Dicsőítés",
+    "Szeretetvendégség"
+   ],
+   "url": "https://krisz.org/alkalmaink/2026-12-tiszahat-ifitalalkozo"
+  }
+ ],
+ "news": [
+  {
+   "published_on": "2026-09-27",
+   "title": "Újraszerveződött a KRISZ Band",
+   "body": "A Covid és a háború miatt szünetelő dicsőítő zenekar újra összeállt, és ismét a településeket járja. Az újraindítást Balázs Antal elnök és Kardos Ágnes referens lelkész kezdeményezte.",
+   "url": "https://krisz.org/hirek/1"
+  }
+ ]
+}
