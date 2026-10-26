@@ -1,8 +1,8 @@
 // KRISZ App service worker: offline működés és értesítések
-const VERSION = "krisz-v2";
+const VERSION = "krisz-v3";
 const SHELL = [
   "./", "index.html", "styles.css", "app.js", "config.js", "data.json", "manifest.webmanifest",
-  "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/favicon-32.png",
+  "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/favicon-32.png", "icons/logo-mask.png",
   "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"
 ];
 
@@ -43,7 +43,7 @@ self.addEventListener("push", (e) => {
   e.waitUntil(self.registration.showNotification(data.title, {
     body: data.body,
     icon: "icons/icon-192.png",
-    badge: "icons/favicon-32.png",
+    badge: "icons/favicon-32.png", "icons/logo-mask.png",
     data: { url: data.url }
   }));
 });
