@@ -1,4 +1,4 @@
-// Értesítés küldése minden feliratkozott eszközre. Csak szerkesztő hívhatja.
+// Üzenet küldése minden feliratkozott eszközre (Üzenetek fül + telefonos értesítés). Csak szerkesztő hívhatja.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import webpush from "npm:web-push@3.6.7";
 
@@ -23,17 +23,19 @@ Deno.serve(async (req) => {
     global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
   });
   const { data: isEditor, error: roleErr } = await asUser.rpc("is_editor");
-  if (roleErr || !isEditor) return json({ error: "Csak szerkesztő küldhet értesítést" }, 403);
+  if (roleErr || !isEditor) return json({ error: "Csak szerkesztő küldhet üzenetet" }, 403);
 
-  let payload: { title?: string; body?: string; url?: string };
+  let payload: { title?: string; body?: string; sender?: string };
   try {
     payload = await req.json();
   } catch {
     return json({ error: "Hibás kérés" }, 400);
   }
   const title = (payload.title ?? "").toString().slice(0, 80).trim();
-  const body = (payload.body ?? "").toString().slice(0, 200).trim();
+  const body = (payload.body ?? "").toString().slice(0, 500).trim();
+  const sender = (payload.sender ?? "KRISZ vezetőség").toString().slice(0, 40).trim() || "KRISZ vezetőség";
   if (!title) return json({ error: "Hiányzik a cím" }, 400);
+  const { data: who } = await asUser.auth.getUser();
 
   const admin = createClient(url, service);
   // A VAPID kulcsok az app_secrets táblában vannak, amit csak a szerveroldal olvashat.
@@ -44,8 +46,10 @@ Deno.serve(async (req) => {
   const { data: subs, error } = await admin.from("push_subscriptions").select("endpoint, subscription");
   if (error) return json({ error: error.message }, 500);
 
-  await admin.from("notifications").insert({ title, body, url: "./#alkalmak" });
-  const message = JSON.stringify({ title, body, url: "./#ertesitesek" });
+  const { error: insErr } = await admin.from("messages").insert({ sender, title, body, created_by: who?.user?.email ?? null });
+  if (insErr) return json({ error: insErr.message }, 500);
+  // A telefonon: "Üzenet – feladó" a fejléc, alatta a cím és a szöveg.
+  const message = JSON.stringify({ title: "Üzenet – " + sender, body: body ? title + "\n" + body : title, url: "./#uzenetek" });
   let sent = 0;
   const gone: string[] = [];
   await Promise.all((subs ?? []).map(async (s) => {

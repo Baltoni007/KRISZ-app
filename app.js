@@ -44,11 +44,12 @@
     var remote = sb ? Promise.all([
       sb.from("events").select("*").order("start_date", { ascending: true, nullsFirst: false }),
       sb.from("news").select("*").order("published_on", { ascending: false }).limit(20),
-      sb.from("notifications").select("id, title, body, url, created_at").order("created_at", { ascending: false }).limit(20)
+      sb.from("notifications").select("id, title, body, url, created_at").order("created_at", { ascending: false }).limit(20),
+      sb.from("messages").select("id, sender, title, body, created_at").order("created_at", { ascending: false }).limit(30)
     ]).then(function (r) {
       if (r[0].error || r[1].error) throw (r[0].error || r[1].error);
       var upd = r[0].data.reduce(function (m, e) { return e.updated_at > m ? e.updated_at : m; }, "");
-      return { events: r[0].data, news: r[1].data, notifications: r[2].error ? [] : r[2].data, updated: upd || new Date().toISOString() };
+      return { events: r[0].data, news: r[1].data, notifications: r[2].error ? [] : r[2].data, messages: r[3].error ? [] : r[3].data, updated: upd || new Date().toISOString() };
     }) : Promise.reject(new Error("no-backend"));
 
     return remote.then(function (d) {
@@ -60,7 +61,9 @@
     }).then(function (d) {
       state.events = d.events || []; state.news = d.news || []; state.updated = d.updated;
       state.notifications = d.notifications || [];
-      renderAlkalmak(); renderHirek(); renderErtesitesek();
+      state.messages = d.messages || [];
+      renderAlkalmak(); renderHirek(); renderErtesitesek(); renderUzenetek();
+      if (!$("v-uzenetek").hidden) markMsgSeen();
       if (!$("v-ertesitesek").hidden) markSeen();
       $("offline").hidden = !state.offline;
     });
@@ -152,6 +155,30 @@
     if (state.seenBefore == null) state.seenBefore = lastSeen();
     if (list.length) store("krisz-notif-seen", list[0].created_at);
     renderErtesitesek();
+  }
+
+  /* ---------- üzenetek (egyoldalú, a vezetőségtől) ---------- */
+  var SENDERS = ["KRISZ vezetőség", "A fejlesztő", "Tóni, a KRISZ elnöke"];
+  function renderUzenetek() {
+    var seen = state.msgSeenBefore != null ? state.msgSeenBefore : (load("krisz-msg-seen") || "");
+    var list = state.messages || [];
+    var h = '<h2 class="sec" style="margin-top:4px">Üzenetek</h2>';
+    if (!list.length) h += '<p class="empty">Még nincs üzenet. Ha a vezetőség vagy a fejlesztő fontosat üzen, itt találod, és a telefonod is jelez.</p>';
+    list.forEach(function (m) {
+      var isNew = m.created_at > seen;
+      h += '<article class="msg' + (isNew ? " is-new" : "") + '" id="m-' + m.id + '"><div class="msg-from"><span class="msg-avatar" aria-hidden="true">' + esc((m.sender || "K").trim().charAt(0).toUpperCase()) + '</span><div><b>' + esc(m.sender) + '</b><time datetime="' + esc(m.created_at) + '">' + esc(relTime(m.created_at)) + '</time></div></div>' +
+        "<h3>" + esc(m.title) + "</h3>" + (m.body ? '<p class="msg-body">' + esc(m.body) + "</p>" : "") +
+        (state.editor ? '<div class="msg-admin" data-mid="' + m.id + '"><button class="linkbtn" data-delmsg="' + m.id + '">Üzenet törlése</button></div>' : "") + "</article>";
+    });
+    $("v-uzenetek").innerHTML = h;
+    var n = list.filter(function (m) { return m.created_at > (load("krisz-msg-seen") || ""); }).length;
+    var b = $("msgBadge"); b.hidden = !n; b.textContent = n > 9 ? "9+" : n;
+  }
+  function markMsgSeen() {
+    var list = state.messages || [];
+    if (state.msgSeenBefore == null) state.msgSeenBefore = load("krisz-msg-seen") || "";
+    if (list.length) store("krisz-msg-seen", list[0].created_at);
+    renderUzenetek();
   }
 
   function tile(t, s, u) { return '<a class="tile" href="' + esc(u) + '" target="_blank" rel="noopener"><b>' + esc(t) + "</b><span>" + esc(s) + "</span></a>"; }
@@ -334,9 +361,13 @@
     });
     h += '<div class="status" id="saveStatus" role="status"></div>';
 
-    h += '<h2 class="sec">Egyedi értesítés</h2><p class="note">Az új és módosított alkalmakról az app magától szól. Ezzel egyéb fontos hírt küldhetsz.</p><form class="panel" id="pushForm"><div class="field"><label for="pTitle">Cím</label><input id="pTitle" maxlength="80" required placeholder="Pl. Új alkalom: Imaéjjel"></div>' +
-      '<div class="field"><label for="pBody">Szöveg</label><textarea id="pBody" maxlength="200" placeholder="Pl. Október 31-én, szombaton. Gyere te is!"></textarea></div>' +
-      '<button class="btn primary" type="submit">Küldés minden feliratkozónak</button><div class="status" id="pStatus" role="status"></div></form>';
+    var lastSender = load("krisz-last-sender") || SENDERS[0];
+    h += '<h2 class="sec">Üzenet küldése</h2><p class="note">Rövid, fontos üzenet minden felhasználónak. A telefonjukon értesítésként jelenik meg, és az Üzenetek fülön visszaolvasható. Az alkalmak változásairól nem kell üzenni, arról az app magától szól.</p>' +
+      '<form class="panel" id="pushForm"><div class="field"><label for="pSender">Feladó</label><select id="pSender">' +
+      SENDERS.map(function (x) { return '<option' + (x === lastSender ? " selected" : "") + ">" + esc(x) + "</option>"; }).join("") + "</select></div>" +
+      '<div class="field"><label for="pTitle">Cím</label><input id="pTitle" maxlength="80" required placeholder="Pl. Imádkozzunk együtt a KRISZ hétért!"></div>' +
+      '<div class="field"><label for="pBody">Üzenet</label><textarea id="pBody" maxlength="500" placeholder="Pl. Ezen a héten esténként 9-kor gondoljunk egymásra imában."></textarea></div>' +
+      '<button class="btn primary" type="submit">Üzenet küldése mindenkinek</button><div class="status" id="pStatus" role="status"></div></form>';
 
     h += '<h2 class="sec">Források</h2><p class="note">Innen dolgozik az asszisztens. Új forrást a Forráslista dokumentumba másolt linkkel lehet felvenni.</p>';
     state.sources.forEach(function (s) {
@@ -365,7 +396,7 @@
     var email = session && session.user && session.user.email;
     if (!email) { state.editor = false; state.email = null; $("tabSzerk").hidden = true; renderKapcsolat(); return; }
     sb.rpc("is_editor").then(function (r) {
-      state.editor = !!r.data; state.email = email;
+      state.editor = !!r.data; state.email = email; renderUzenetek();
       $("tabSzerk").hidden = !state.editor;
       renderKapcsolat();
       if (state.editor) { loadEditorData(); if (location.hash.indexOf("access_token") > -1) { history.replaceState(null, "", location.pathname); show("szerk"); } }
@@ -374,7 +405,7 @@
   }
 
   /* ---------- navigation & events ---------- */
-  var VIEWS = ["alkalmak", "hirek", "ertesitesek", "enekek", "kapcsolat", "szerk"];
+  var VIEWS = ["alkalmak", "uzenetek", "hirek", "ertesitesek", "enekek", "kapcsolat", "szerk"];
   function show(v) {
     if (VIEWS.indexOf(v) < 0) v = "alkalmak";
     document.querySelectorAll("nav.tabs button").forEach(function (b) { if (b.dataset.v === v) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
@@ -382,6 +413,7 @@
     if (v === "szerk" && !state.editor) renderLogin();
     document.body.classList.toggle("songs-open", v === "enekek");
     if (v === "ertesitesek") markSeen(); else state.seenBefore = null;
+    if (v === "uzenetek") markMsgSeen(); else state.msgSeenBefore = null;
     $("bellBtn").classList.toggle("on", v === "ertesitesek");
     if (v === "enekek") openSongbook();
     if (location.hash !== "#" + v && location.hash.indexOf("access_token") < 0) history.replaceState(null, "", "#" + v);
@@ -434,6 +466,19 @@
     if (t.id === "logoutBtn") { sb.auth.signOut().then(function () { show("alkalmak"); }); return; }
     if (t.dataset.goto) { show(t.dataset.goto); return; }
     if (t.dataset.decide) { decide(t.dataset.decide, t.dataset.ok === "1", t); return; }
+    if (t.dataset.delmsg) {
+      var box = t.parentNode;
+      box.innerHTML = '<span class="note" style="margin:0">Biztosan törlöd mindenkinél?</span> <button class="linkbtn" data-delyes="' + t.dataset.delmsg + '">Igen, törlöm</button> <button class="linkbtn" data-delno="1">Mégse</button>';
+      return;
+    }
+    if (t.dataset.delno) { renderUzenetek(); return; }
+    if (t.dataset.delyes) {
+      sb.from("messages").delete().eq("id", +t.dataset.delyes).then(function (r) {
+        if (r.error) { t.parentNode.textContent = "Nem sikerült törölni."; return; }
+        fetchData();
+      });
+      return;
+    }
   });
 
   document.addEventListener("submit", function (ev) {
@@ -449,11 +494,13 @@
     if (ev.target.id === "pushForm") {
       var ps = $("pStatus"), btn = ev.target.querySelector("button");
       btn.disabled = true; ps.textContent = "Küldés…";
-      sb.functions.invoke("send-push", { body: { title: $("pTitle").value, body: $("pBody").value, url: "./#alkalmak" } }).then(function (r) {
+      var sender = $("pSender").value; store("krisz-last-sender", sender);
+      sb.functions.invoke("send-push", { body: { title: $("pTitle").value, body: $("pBody").value, sender: sender } }).then(function (r) {
         btn.disabled = false;
         if (r.error) { ps.textContent = "Nem sikerült elküldeni. Próbáld újra később."; return; }
-        ps.textContent = r.data.total ? "Elküldve " + r.data.sent + " eszközre." : "Még senki nem iratkozott fel értesítésre.";
-        if (r.data.sent) { $("pTitle").value = ""; $("pBody").value = ""; }
+        ps.textContent = "Elküldve. Megjelent az Üzenetek fülön" + (r.data.total ? ", és " + r.data.sent + " telefonra ment értesítés." : ". Értesítésre még senki nem iratkozott fel.");
+        $("pTitle").value = ""; $("pBody").value = "";
+        fetchData();
       });
     }
   });

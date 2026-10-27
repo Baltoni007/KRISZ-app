@@ -15,7 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Domine:wght@500;600;700&family=Open+Sans:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="styles.css?v=9">
+<link rel="stylesheet" href="styles.css?v=10">
 </head>
 <body>
 <header class="top"><div class="wrap">
@@ -28,6 +28,7 @@
 <main class="wrap" id="app">
   <div class="offline" id="offline" hidden>Nincs internet. A legutóbb betöltött adatokat látod.</div>
   <section class="view" id="v-alkalmak" aria-label="Alkalmak"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></section>
+  <section class="view" id="v-uzenetek" aria-label="Üzenetek" hidden></section>
   <section class="view" id="v-hirek" aria-label="Hírek" hidden></section>
   <section class="view" id="v-ertesitesek" aria-label="Értesítések" hidden></section>
   <section class="view" id="v-enekek" aria-label="Énekek" hidden>
@@ -41,14 +42,15 @@
 
 <nav class="tabs" aria-label="Fő menü"><div class="wrap">
   <button data-v="alkalmak" aria-current="page"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Alkalmak</button>
+  <button data-v="uzenetek"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 7 8.5 6 8.5-6"/></svg>Üzenetek<span class="badge" id="msgBadge" hidden></span></button>
   <button data-v="hirek"><svg viewBox="0 0 24 24"><path d="M5 4h11a2 2 0 0 1 2 2v13a1 1 0 0 0 2 0V9h-2"/><path d="M5 4v14a2 2 0 0 0 2 2h12"/><path d="M8 8h6M8 12h6M8 16h4"/></svg>Hírek</button>
   <button data-v="enekek"><svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>Énekek</button>
   <button data-v="kapcsolat"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.6 0l3-3a4 4 0 0 0-5.6-5.6l-1 1"/><path d="M14 10a4 4 0 0 0-5.6 0l-3 3a4 4 0 0 0 5.6 5.6l1-1"/></svg>Felületeink</button>
   <button data-v="szerk" id="tabSzerk" hidden><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>Szerkesztő<span class="badge" id="badge" hidden></span></button>
 </div></nav>
 
-<script src="config.js?v=9"></script>
+<script src="config.js?v=10"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="app.js?v=9"></script>
+<script src="app.js?v=10"></script>
 </body>
 </html>
