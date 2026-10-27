@@ -498,7 +498,7 @@
       sb.functions.invoke("send-push", { body: { title: $("pTitle").value, body: $("pBody").value, sender: sender } }).then(function (r) {
         btn.disabled = false;
         if (r.error) { ps.textContent = "Nem sikerült elküldeni. Próbáld újra később."; return; }
-        ps.textContent = "Elküldve. Megjelent az Üzenetek fülön" + (r.data.total ? ", és " + r.data.sent + " telefonra ment értesítés." : ". Értesítésre még senki nem iratkozott fel.");
+        ps.textContent = "Elküldve. Megjelent az Üzenetek fülön" + (r.data.total ? ", és " + r.data.total + " feliratkozott telefonra megy értesítés." : ". Értesítésre még senki nem iratkozott fel.");
         $("pTitle").value = ""; $("pBody").value = "";
         fetchData();
       });

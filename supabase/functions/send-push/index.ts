@@ -1,6 +1,5 @@
-// Üzenet küldése minden feliratkozott eszközre (Üzenetek fül + telefonos értesítés). Csak szerkesztő hívhatja.
+// Üzenet mentése az appból (Szerkesztő fül). Csak szerkesztő hívhatja; az értesítést az adatbázis indítja.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import webpush from "npm:web-push@3.6.7";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -38,30 +37,9 @@ Deno.serve(async (req) => {
   const { data: who } = await asUser.auth.getUser();
 
   const admin = createClient(url, service);
-  // A VAPID kulcsok az app_secrets táblában vannak, amit csak a szerveroldal olvashat.
-  const { data: keys } = await admin.from("app_secrets").select("name, value").in("name", ["VAPID_PUBLIC_KEY", "VAPID_PRIVATE_KEY"]);
-  const k = Object.fromEntries((keys ?? []).map((r) => [r.name, r.value]));
-  if (!k.VAPID_PUBLIC_KEY || !k.VAPID_PRIVATE_KEY) return json({ error: "Hiányzó VAPID kulcs" }, 500);
-  webpush.setVapidDetails("mailto:kriszpont@gmail.com", k.VAPID_PUBLIC_KEY, k.VAPID_PRIVATE_KEY);
-  const { data: subs, error } = await admin.from("push_subscriptions").select("endpoint, subscription");
-  if (error) return json({ error: error.message }, 500);
-
+  // Csak elmentjük; a telefonos értesítést az adatbázis indítja (push-message), így bárhonnan küldött üzenet ugyanúgy megy ki.
   const { error: insErr } = await admin.from("messages").insert({ sender, title, body, created_by: who?.user?.email ?? null });
   if (insErr) return json({ error: insErr.message }, 500);
-  // A telefonon: "Üzenet – feladó" a fejléc, alatta a cím és a szöveg.
-  const message = JSON.stringify({ title: "Üzenet – " + sender, body: body ? title + "\n" + body : title, url: "./#uzenetek" });
-  let sent = 0;
-  const gone: string[] = [];
-  await Promise.all((subs ?? []).map(async (s) => {
-    try {
-      await webpush.sendNotification(s.subscription, message, { TTL: 60 * 60 * 24 });
-      sent++;
-    } catch (e) {
-      const code = (e as { statusCode?: number }).statusCode;
-      if (code === 404 || code === 410) gone.push(s.endpoint);
-    }
-  }));
-  if (gone.length) await admin.from("push_subscriptions").delete().in("endpoint", gone);
-
-  return json({ sent, removed: gone.length, total: subs?.length ?? 0 });
+  const { count } = await admin.from("push_subscriptions").select("endpoint", { count: "exact", head: true });
+  return json({ ok: true, total: count ?? 0 });
 });

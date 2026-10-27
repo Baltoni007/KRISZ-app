@@ -1,0 +1,3 @@
+-- Lásd az élő adatbázisban alkalmazott migrációkat:
+-- "messages": messages tábla (mindenki olvassa, szerkesztő törölhet)
+-- "messages_auto_push": minden új üzenet beszúrásakor a push-message edge function telefonos értesítést küld
